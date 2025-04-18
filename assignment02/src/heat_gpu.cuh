@@ -12,7 +12,7 @@
  * @param m   Number of columns
  * @param p   Number of iterations
  */
-void launch_heat_propagation(float* d_A, float* d_B, int n, int m, int p, cudaStream_t stream = 0);
+ void launch_heat_propagation(float* d_A, float* d_B, int n, int m, int p, cudaStream_t stream = 0);
 
 /**
  * @brief Launches the GPU row average kernel.
