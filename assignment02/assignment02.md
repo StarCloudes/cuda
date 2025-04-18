@@ -109,5 +109,28 @@ Done: n=30, m=50, iterations=20, averages=no
 
 
 
+## Task 2  GPU **Implementation**
 
+In this section, we extend the CPU-based heat propagation model from Task 1 by implementing its GPU counterpart using CUDA. The goal is to accelerate the computation of directional heat propagation across a 2D cylindrical matrix, using parallel threads and efficient memory access.
 
+### 1. **Implementation Highlights**
+
+- **CUDA Kernel (heat_propagate_kernel)**
+
+  A 2D CUDA kernel was developed where each thread computes the temperature at a specific position [i][j] in the matrix. The kernel uses modular arithmetic to implement wrap-around indexing, ensuring proper heat flow even at the end of each row (i.e., cylindrical behavior).
+
+- **Host Wrapper (launch_heat_propagation)**
+
+  A host-side launcher function was written to:
+
+  - Configure the grid and block dimensions
+  - Call the kernel repeatedly for a given number of iterations
+  - Alternate between two device buffers (d_A, d_B) to avoid overwriting data during propagation
+
+### 2. File Structure
+
+- src/heat_cpu.cpp — for cpu
+- src/heat_gpu.cu — for CUDA kernels
+- src/main.cu — main program that calls either CPU or GPU
+- include/heat_gpu.cuh — headers for CUDA functions
+- Makefile — to compile both .cpp and .cu files

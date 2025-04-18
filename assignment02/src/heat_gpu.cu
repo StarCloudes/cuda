@@ -47,7 +47,29 @@ __global__ void heat_propagate_kernel(float* next, const float* prev, int n, int
 // TODO 2: Device kernel to compute per-row averages (for -a flag)
 __global__ void row_average_kernel(float* row_avg, const float* matrix, int n, int m) {
     // TODO: Each block handles one row, threads reduce over columns
+    // Each block is responsible for processing one row 
+    int row = blockIdx.x;
+    int tid = threadIdx.x;
+
+    __shared__ float partial_sum[256]; // Max threads per block
+
+    float local = 0.0f;
+
+    for (int j = tid; j < m; j += blockDim.x) {
+        local += matrix[row * m + j];
+    }
     // TODO: Use shared memory or warp-level atomicAdd
+    partial_sum[tid] = local;
+    __syncthreads();
+
+    // Row Average Calculation
+    if (tid == 0) {
+        float sum = 0.0f;
+        for (int i = 0; i < blockDim.x; ++i) {
+            sum += partial_sum[i];
+        }
+        row_avg[row] = sum / m;
+    }
 }
 
 // TODO 3: Host wrapper for heat propagation
@@ -58,11 +80,11 @@ void launch_heat_propagation(float* d_matrix_A, float* d_matrix_B, int n, int m,
                  (n + blockDim.y - 1) / blockDim.y);
 
     // TODO: Launch propagation kernel alternating buffers             
-    for (int iter = 0; iter < p; ++iter) {
+    for (int iter = 0; iter < iterations; ++iter) {
         if (iter % 2 == 0) {
-            heat_propagate_kernel<<<gridDim, blockDim>>>(d_B, d_A, n, m);
+            heat_propagate_kernel<<<gridDim, blockDim>>>(d_matrix_B, d_matrix_A, n, m);
         } else {
-            heat_propagate_kernel<<<gridDim, blockDim>>>(d_A, d_B, n, m);
+            heat_propagate_kernel<<<gridDim, blockDim>>>(d_matrix_A, d_matrix_B, n, m);
         }
     }
     cudaDeviceSynchronize();
@@ -71,4 +93,7 @@ void launch_heat_propagation(float* d_matrix_A, float* d_matrix_B, int n, int m,
 // TODO 4: Host wrapper for average computation
 void launch_row_average(float* d_result_matrix, float* d_row_avg, int n, int m, cudaStream_t stream) {
     // TODO: Configure grid and block, launch row_average_kernel
+    int threads = 256; // adjust if m is very small
+    row_average_kernel<<<n, threads, 0, stream>>>(d_row_avg, d_result_matrix, n, m);
+    cudaDeviceSynchronize();
 }
