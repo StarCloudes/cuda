@@ -15,7 +15,7 @@ void cpu_heat_propagation(std::vector<float>& A, std::vector<float>& B, int n, i
     for (int iter = 0; iter < p; ++iter) {
         for (int i = 0; i < n; ++i) {
             for (int j = 0; j < m; ++j) {
-                // keep column 0 fixed
+                // keep column 0 fixed
                 if (j == 0) {
                     B[i * m + j] = A[i * m + j];
                 } else {
@@ -37,7 +37,7 @@ void cpu_heat_propagation(std::vector<float>& A, std::vector<float>& B, int n, i
         }
        std::swap(A, B);       
     }
-    std::cout << "cpu_heat_propagation \n";
+   // std::cout << "cpu_heat_propagation \n";
 }
 
 /**
@@ -56,5 +56,13 @@ void compute_cpu_row_averages(const std::vector<float>& mat, std::vector<float>&
         }
         avg[i] = sum / m;
     }
-    std::cout << "CPU row average\n";
+    float total_sum = 0.0f, min_val = mat[0], max_val = mat[0];
+    for (size_t i = 0; i < mat.size(); ++i) {
+        total_sum += mat[i];
+        if (mat[i] < min_val) min_val = mat[i];
+        if (mat[i] > max_val) max_val = mat[i];
+    }
+    std::cout << "CPU result: Final sum = " << total_sum
+              << ", min = " << min_val
+              << ", max = " << max_val << std::endl;
 }

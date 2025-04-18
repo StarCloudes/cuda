@@ -1,14 +1,12 @@
 # Makefile
-CXX = g++
-CXXFLAGS = -O2 -std=c++11
-SRC = heat_cpu.cpp
-OBJ = $(SRC:.cpp=.o)
-BIN = heat_cpu
+NVCC = nvcc
+SRC = src/main.cu src/heat_gpu.cu src/heat_cpu.cpp
+TARGET = heat_gpu
 
-all: $(BIN)
+INCLUDES = -Iinclude
 
-$(BIN): $(OBJ)
-	$(CXX) $(CXXFLAGS) -o $@ $^
+all:
+	$(NVCC) $(INCLUDES) -o $(TARGET) $(SRC)
 
 clean:
-	rm -f $(OBJ) $(BIN)
+	rm -f $(TARGET)
