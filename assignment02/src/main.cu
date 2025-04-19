@@ -6,11 +6,12 @@
 #include <iomanip>
 #include <chrono>
 
+// Enum to control execution mode: both CPU and GPU, or only CPU, or only GPU
 enum RunMode { MODE_BOTH, MODE_CPU_ONLY, MODE_GPU_ONLY };
 RunMode mode = MODE_BOTH;
 
-
 int main(int argc, char *argv[]) {
+    // Parse command-line arguments
     int n = 32, m = 32, p = 10;
     bool cpu_only = false;
     bool do_avg = false;
@@ -41,6 +42,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    // Allocate host matrices for input and output
     std::vector<float> hostA(n * m), hostB(n * m);
 
     // === Block size check ===
@@ -53,6 +55,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     
+    // Initialize hostA with boundary and initial conditions
     for (int i = 0; i < n; ++i) {
         float boundary = 0.98f * (i + 1) * (i + 1) / float(n * n);
         hostA[i * m + 0] = boundary;
@@ -62,8 +65,10 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    // Device pointers for GPU matrices
     float *d_A, *d_B;
 
+    // GPU memory allocation and data transfer to device
     cudaEvent_t ev_alloc_start, ev_alloc_stop;
     cudaEvent_t ev_copy_to_start, ev_copy_to_stop;
     cudaEvent_t ev_kernel_start, ev_kernel_stop;
@@ -89,6 +94,7 @@ int main(int argc, char *argv[]) {
         cudaEventElapsedTime(&time_copy_to, ev_copy_to_start, ev_copy_to_stop);
     }
 
+    // Start overall GPU timer if requested
     cudaEvent_t start, stop;
     float gpuTime = 0.0f;
     if (timing && mode != MODE_CPU_ONLY) {
@@ -102,6 +108,7 @@ int main(int argc, char *argv[]) {
     std::vector<float> cpu_avg(n);
     float cpu_time_ms = 0.0f;
 
+    // Run CPU version of the heat propagation
     if (mode != MODE_GPU_ONLY) {
         auto cpu_start = std::chrono::high_resolution_clock::now();
         cpu_heat_propagation(cpuA, cpuB, n, m, p);
@@ -114,6 +121,7 @@ int main(int argc, char *argv[]) {
         cpu_time_ms = duration_prop.count() + duration_avg.count();
     }
 
+    // Run GPU version of the heat propagation
     if (mode != MODE_CPU_ONLY) {
         cudaEventCreate(&ev_kernel_start); cudaEventCreate(&ev_kernel_stop);
         cudaEventRecord(ev_kernel_start);
@@ -148,8 +156,10 @@ int main(int argc, char *argv[]) {
                   << ", max = " << max_val << std::endl;
     }
     
+    // Choose output matrix based on execution mode
     const std::vector<float>& output_matrix = cpu_only ? (p % 2 == 0 ? cpuA : cpuB) : hostB;
 
+    // Print final matrix if verbose flag is set
     std::cout << std::fixed << std::setprecision(6);
     if (verbose) {
         std::cout << "Final matrix after " << p << " iterations:\n";
@@ -161,7 +171,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
-
+    // Print timing breakdown if timing flag is set
     if (timing) {
         std::cout << "\n[GPU Timing Breakdown]\n";
         std::cout << "GPU malloc time: " << time_alloc << " ms\n";
@@ -175,13 +185,15 @@ int main(int argc, char *argv[]) {
         std::cout << "Speedup (CPU / GPU kernel+avg): " << (cpu_time_ms / (time_kernel + time_avg)) << "x\n";
     }
 
+    // Compute and print row averages (CPU or GPU)
     if (do_avg) {
         std::cout << "Row averages after " << p << " iterations:\n";
         if (cpu_only) {
             for (int i = 0; i < n; ++i) {
                 std::cout << "Row " << std::setw(3) << i << " avg = " << std::setw(10) << cpu_avg[i] << "\n";
             }
-        } else {
+        } 
+        else if(mode == MODE_BOTH) {
             cudaEventCreate(&ev_avg_start); cudaEventCreate(&ev_avg_stop);
             cudaEventRecord(ev_avg_start);
             float* d_avg;
@@ -197,10 +209,24 @@ int main(int argc, char *argv[]) {
             for (int i = 0; i < n; ++i) {
                 std::cout << "Row " << std::setw(3) << i << " avg = " << std::setw(10) << host_avg[i] << "\n";
             }
+
+            float max_avg_diff = 0.0f;
+            for (int i = 0; i < n; ++i) {
+                float diff = std::fabs(cpu_avg[i] - host_avg[i]);
+                if (diff > 1e-6f) {
+                    std::cout << "Row avg mismatch at row " << i << ": CPU=" << cpu_avg[i]
+                              << ", GPU=" << host_avg[i]
+                              << ", diff=" << diff << "\n";
+                }
+                if (diff > max_avg_diff) max_avg_diff = diff;
+            }
+            std::cout << "Max row average difference: " << max_avg_diff << "\n";
+
             cudaFree(d_avg);
         }
     }
 
+    // Compare CPU and GPU matrices element-wise
     if (mode == MODE_BOTH) {
         const std::vector<float>& cpu_matrix = (p % 2 == 0 ? cpuA : cpuB);
         float max_diff = 0.0f;
@@ -220,6 +246,7 @@ int main(int argc, char *argv[]) {
         std::cout << "Max matrix difference: " << max_diff << "\n";
     }
 
+    // Free device memory
     if (!cpu_only) {
         cudaFree(d_A);
         cudaFree(d_B);
