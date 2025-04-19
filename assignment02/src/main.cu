@@ -6,13 +6,16 @@
 #include <iomanip>
 #include <chrono>
 
+enum RunMode { MODE_BOTH, MODE_CPU_ONLY, MODE_GPU_ONLY };
+RunMode mode = MODE_BOTH;
+
+
 int main(int argc, char *argv[]) {
     int n = 32, m = 32, p = 10;
+    bool cpu_only = false;
     bool do_avg = false;
-    bool skip_cpu = false;
     bool verbose = false;
     bool timing = false;
-    bool cpu_only = false;
 
     for (int i = 1; i < argc; ++i) {
         if (strcmp(argv[i], "-n") == 0 && i + 1 < argc) {
@@ -23,19 +26,17 @@ int main(int argc, char *argv[]) {
             p = atoi(argv[++i]);
         } else if (strcmp(argv[i], "-a") == 0) {
             do_avg = true;
-        } else if (strcmp(argv[i], "-c") == 0) {
-            skip_cpu = true;
+        } else if (strcmp(argv[i], "--cpu-only") == 0) {
+            mode = MODE_CPU_ONLY;
+            timing = false;
+        } else if (strcmp(argv[i], "-g") == 0) {
+            mode = MODE_GPU_ONLY;
         } else if (strcmp(argv[i], "-v") == 0) {
             verbose = true;
         } else if (strcmp(argv[i], "-t") == 0) {
             timing = true;
-        } else if (strcmp(argv[i], "--cpu-only") == 0) {
-            cpu_only = true;
-            skip_cpu = false;
-            do_avg = true;
-            timing = false;
         } else {
-            std::cerr << "Usage: ./heat_gpu [-n rows] [-m cols] [-p iters] [-a] [-c] [-v]\n";
+            std::cerr << "Usage: ./heat_gpu [-n rows] [-m cols] [-p iters] [-a] [-g] [-v]\n";
             return 1;
         }
     }
@@ -70,7 +71,7 @@ int main(int argc, char *argv[]) {
     cudaEvent_t ev_copy_back_start, ev_copy_back_stop;
     float time_alloc = 0, time_copy_to = 0, time_kernel = 0, time_avg = 0, time_copy_back = 0;
 
-    if (!cpu_only) {
+    if (mode != MODE_CPU_ONLY) {
         cudaEventCreate(&ev_alloc_start); cudaEventCreate(&ev_alloc_stop);
         cudaEventRecord(ev_alloc_start);
         cudaMalloc(&d_A, n * m * sizeof(float));
@@ -90,7 +91,7 @@ int main(int argc, char *argv[]) {
 
     cudaEvent_t start, stop;
     float gpuTime = 0.0f;
-    if (timing && !cpu_only) {
+    if (timing && mode != MODE_CPU_ONLY) {
         cudaEventCreate(&start);
         cudaEventCreate(&stop);
         cudaEventRecord(start);
@@ -100,9 +101,8 @@ int main(int argc, char *argv[]) {
     std::vector<float> cpuB = hostA;
     std::vector<float> cpu_avg(n);
     float cpu_time_ms = 0.0f;
-    float cpu_prop_time = 0.0f;
 
-    if (!skip_cpu) {
+    if (mode != MODE_GPU_ONLY) {
         auto cpu_start = std::chrono::high_resolution_clock::now();
         cpu_heat_propagation(cpuA, cpuB, n, m, p);
         auto cpu_mid = std::chrono::high_resolution_clock::now();
@@ -112,10 +112,9 @@ int main(int argc, char *argv[]) {
         std::chrono::duration<float, std::milli> duration_prop = cpu_mid - cpu_start;
         std::chrono::duration<float, std::milli> duration_avg = cpu_end - cpu_mid;
         cpu_time_ms = duration_prop.count() + duration_avg.count();
-        cpu_prop_time = duration_prop.count();
     }
 
-    if (!cpu_only) {
+    if (mode != MODE_CPU_ONLY) {
         cudaEventCreate(&ev_kernel_start); cudaEventCreate(&ev_kernel_stop);
         cudaEventRecord(ev_kernel_start);
         launch_heat_propagation(d_A, d_B, n, m, p);
@@ -137,6 +136,16 @@ int main(int argc, char *argv[]) {
         cudaEventRecord(ev_copy_back_stop);
         cudaEventSynchronize(ev_copy_back_stop);
         cudaEventElapsedTime(&time_copy_back, ev_copy_back_start, ev_copy_back_stop);
+
+        float total_sum = 0.0f, min_val = hostB[0], max_val = hostB[0];
+        for (int i = 0; i < n * m; ++i) {
+            total_sum += hostB[i];
+            if (hostB[i] < min_val) min_val = hostB[i];
+            if (hostB[i] > max_val) max_val = hostB[i];
+        }
+        std::cout << "GPU result: Final sum = " << total_sum
+                  << ", min = " << min_val
+                  << ", max = " << max_val << std::endl;
     }
     
     const std::vector<float>& output_matrix = cpu_only ? (p % 2 == 0 ? cpuA : cpuB) : hostB;
@@ -153,13 +162,6 @@ int main(int argc, char *argv[]) {
     }
 
 
-    if (timing && !skip_cpu) {
-        std::cout << "CPU propagation time: " << cpu_prop_time << " ms\n";
-        // std::cout << "CPU propagation + average time: " << cpu_time_ms << " ms\n";
-        std::cout << "GPU propagation time: " << time_kernel << " ms\n";
-        std::cout << "Speedup (CPU/GPU propagation): " << (cpu_prop_time / time_kernel) << "x\n";
-    }
-
     if (timing) {
         std::cout << "\n[GPU Timing Breakdown]\n";
         std::cout << "GPU malloc time: " << time_alloc << " ms\n";
@@ -169,6 +171,7 @@ int main(int argc, char *argv[]) {
         std::cout << "GPU copy back to host: " << time_copy_back << " ms\n";
         std::cout << "Total GPU compute time (kernel + avg): " << (time_kernel + time_avg) << " ms\n";
         std::cout << "Total GPU data transfer time: " << (time_alloc + time_copy_to + time_copy_back) << " ms\n";
+        std::cout << "Total CPU compute time " << cpu_time_ms << " ms\n";
         std::cout << "Speedup (CPU / GPU kernel+avg): " << (cpu_time_ms / (time_kernel + time_avg)) << "x\n";
     }
 
