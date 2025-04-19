@@ -6,9 +6,14 @@ The goal of this assignment is to write a model for propagation of heat inside a
 
 ## **Task 1 - CPU calculation **
 
-### 1. **Objective**
+### 1. **Objective** and code 
 
 Implement the heat‑propagation model on the CPU in single precision, with configurable grid size (n×m), number of iterations (p), and optional row‑average output.
+
+| **File**     | **Role**           | Purpose                                                      |
+| ------------ | ------------------ | ------------------------------------------------------------ |
+| heat_cpu.cpp | CPU Implementation | Implements CPU-side heat propagation and row averaging logic. |
+| heat_cpu.h   | CPU Declaration    | Declares reusable CPU function interfaces for main.cu.       |
 
 ### 2. **Code Structure**
 
@@ -61,51 +66,25 @@ Implement the heat‑propagation model on the CPU in single precision, with conf
 
 ### 4. **Usage Example**
 
-```
-./heat_cpu
-./heat_cpu -n 30 -m 50 -p 20
-```
-
-Diagnostic output:
+In this task, we implemented **directional horizontal heat propagation** entirely on the CPU using finite differences. The radiator model includes cyclic wrap-around at each row to simulate a cylindrical pipe system. The computation was executed using the following parameters:
 
 ```
-Iter 0 sum = 183.342
-Iter 1 sum = 189.559
-Iter 2 sum = 195.601
-Iter 3 sum = 201.527
-Iter 4 sum = 207.371
-Iter 5 sum = 213.153
-Iter 6 sum = 218.881
-Iter 7 sum = 224.563
-Iter 8 sum = 230.202
-Iter 9 sum = 235.799
-Iter 10 sum = 241.354
-Iter 11 sum = 246.868
-Iter 12 sum = 252.338
-Iter 13 sum = 257.764
-Iter 14 sum = 263.144
-Iter 15 sum = 268.476
-Iter 16 sum = 273.758
-Iter 17 sum = 278.988
-Iter 18 sum = 284.164
-Iter 19 sum = 289.283
-Final sum = 289.283, min = 0.000181621, max = 0.98
-Done: n=30, m=50, iterations=20, averages=no
+./heat_sim --cpu-only 
+./heat_sim -n 4 -m 128 -p 5 --cpu-only
+./heat_sim -n 4 -m 128 -p 5 --cpu-only -a 
+./heat_sim -n 4 -m 128 -p 5 --cpu-only -a -v
 ```
+
+Module output:![Screenshot 2025-04-19 at 2.13.45 AM](/Users/neil/Library/Application Support/typora-user-images/Screenshot 2025-04-19 at 2.13.45 AM.png)
+
+![Screenshot 2025-04-19 at 2.12.43 AM](/Users/neil/Library/Application Support/typora-user-images/Screenshot 2025-04-19 at 2.12.43 AM.png)
 
 ### 5. **Observations**
 
-- **Monotonic Increase in Heat Sum**
-
-  The total heat across all cells increased steadily from 183.34 to 289.28 over 20 iterations. This suggests that heat is correctly propagating from the fixed left boundary into the rest of the grid.
-
-- **Expected Maximum Temperature Reached**
-
-  The maximum observed value at the end of the simulation was exactly 0.98, which matches the theoretical maximum imposed by the boundary condition on column 0. This confirms correct initialization and preservation of boundary values.
-
-- **Low Minimum Value Indicates Gradient Formation**
-
-  The final minimum value (~0.00018) shows that heat had not fully reached the farthest columns yet, as expected in directional diffusion with relatively few steps. This confirms realistic spatial behavior.
+- After 5 iterations, the **final matrix values** show clear and smooth horizontal heat diffusion patterns along each row. Heat values increase from left to right, following the direction of flow and weighted stencil propagation.
+- The **boundary condition** (leftmost column) remains stable and precomputed as expected. It influences the rest of each row’s values based on the stencil weights.
+- The **final total sum** was above, which confirms correct propagation within the valid float range.
+- The **row averages** also increased gradually from top to bottom. This is consistent with the quadratic boundary condition, where lower rows have higher base temperatures and thus higher propagated values.
 
 
 
@@ -115,22 +94,36 @@ In this section, we extend the CPU-based heat propagation model from Task 1 by i
 
 ### 1. **Implementation Highlights**
 
-- **CUDA Kernel (heat_propagate_kernel)**
+| **File**     | **Role**       | **Purpose**                               |
+| ------------ | -------------- | ----------------------------------------- |
+| main.cu      | Orchestration  | Decouples logic; handles input/output     |
+| heat_gpu.cuh | Declaration    | Clean and modular; prevents circular deps |
+| heat_gpu.cu  | Implementation | Encapsulates CUDA logic; easy to maintain |
 
-  A 2D CUDA kernel was developed where each thread computes the temperature at a specific position [i][j] in the matrix. The kernel uses modular arithmetic to implement wrap-around indexing, ensuring proper heat flow even at the end of each row (i.e., cylindrical behavior).
+- **CUDA Kernel: Heat Propagate kernel**
 
-- **Host Wrapper (launch_heat_propagation)**
+  This kernel ensures wrap-around indexing to simulate the cylindrical structure.
 
-  A host-side launcher function was written to:
-
+-  **Iterative Propagation: launch_heat_propagation**：
   - Configure the grid and block dimensions
   - Call the kernel repeatedly for a given number of iterations
   - Alternate between two device buffers (d_A, d_B) to avoid overwriting data during propagation
+- **CUDA Kernel: Row Average Computation**
 
-### 2. File Structure
+​	Each block handles one row; each thread handles multiple elements (columns).
 
-- src/heat_cpu.cpp — for cpu
-- src/heat_gpu.cu — for CUDA kernels
-- src/main.cu — main program that calls either CPU or GPU
-- include/heat_gpu.cuh — headers for CUDA functions
-- Makefile — to compile both .cpp and .cu files
+### 2. **Usage Example**
+
+```
+./heat_sim -n 256 -m 256 -p 5 -g
+./heat_sim -n 256 -m 256 -p 5 -v
+./heat_sim -n 256 -m 256 -p 5 -a 
+./heat_sim -n 256 -m 256 -p 5 -t 
+```
+
+![Screenshot 2025-04-19 at 2.30.44 AM](/Users/neil/Library/Application Support/typora-user-images/Screenshot 2025-04-19 at 2.30.44 AM.png)
+
+### **3.Observations**
+
+- The CUDA implementation of the heat propagation simulation was successfully completed. As shown in the timing results, the GPU achieved a **speedup of over 73x** compared to the CPU for kernel + average computations. This demonstrates a significant performance benefit from GPU parallelism, especially on large grids (e.g., 256×256).
+- In terms of correctness, the final GPU matrix perfectly matched the CPU result with a **maximum matrix difference of 0.000000**, ensuring the implementation is both fast and accurate.
