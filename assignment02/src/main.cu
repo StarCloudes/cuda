@@ -175,20 +175,6 @@ int main(int argc, char *argv[]) {
         std::cout << "Speedup (CPU / GPU kernel+avg): " << (cpu_time_ms / (time_kernel + time_avg)) << "x\n";
     }
 
-    // if (!skip_cpu) {
-    //     float max_diff = 0.0f;
-    //     for (int i = 0; i < n * m; ++i) {
-    //         float diff = std::fabs(output_matrix[i] - (p % 2 == 0 ? cpuA[i] : cpuB[i]));
-    //         if (diff > 1e-4) {
-    //             std::cout << "Mismatch at (" << i / m << "," << i % m << "): CPU=" 
-    //                       << (p % 2 == 0 ? cpuA[i] : cpuB[i]) 
-    //                       << " GPU=" << output_matrix[i] << " diff=" << diff << "\n";
-    //         }
-    //         if (diff > max_diff) max_diff = diff;
-    //     }
-    //     std::cout << "Max matrix difference: " << max_diff << "\n";
-    // }
-
     if (do_avg) {
         std::cout << "Row averages after " << p << " iterations:\n";
         if (cpu_only) {
@@ -213,6 +199,25 @@ int main(int argc, char *argv[]) {
             }
             cudaFree(d_avg);
         }
+    }
+
+    if (mode == MODE_BOTH) {
+        const std::vector<float>& cpu_matrix = (p % 2 == 0 ? cpuA : cpuB);
+        float max_diff = 0.0f;
+        for (int i = 0; i < n; ++i) {
+            for (int j = 0; j < m; ++j) {
+                int idx = i * m + j;
+                float diff = std::fabs(cpu_matrix[idx] - hostB[idx]);
+                if (diff > 1e-6f) {
+                    std::cout << "Mismatch at (" << i << "," << j << "): "
+                              << "CPU=" << cpu_matrix[idx]
+                              << ", GPU=" << hostB[idx]
+                              << ", diff=" << diff << "\n";
+                }
+                if (diff > max_diff) max_diff = diff;
+            }
+        }
+        std::cout << "Max matrix difference: " << max_diff << "\n";
     }
 
     if (!cpu_only) {
