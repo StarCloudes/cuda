@@ -5,6 +5,7 @@
 #include "heat_cpu.h"
 #include <iomanip>
 #include <chrono>
+#include "real.h"
 
 // Enum to control execution mode: both CPU and GPU, or only CPU, or only GPU
 enum RunMode { MODE_BOTH, MODE_CPU_ONLY, MODE_GPU_ONLY };
@@ -13,7 +14,6 @@ RunMode mode = MODE_BOTH;
 int main(int argc, char *argv[]) {
     // Parse command-line arguments
     int n = 32, m = 32, p = 10;
-    bool cpu_only = false;
     bool do_avg = false;
     bool verbose = false;
     bool timing = false;
@@ -43,7 +43,7 @@ int main(int argc, char *argv[]) {
     }
 
     // Allocate host matrices for input and output
-    std::vector<float> hostA(n * m), hostB(n * m);
+    std::vector<real_t> hostA(n * m), hostB(n * m);
 
     // === Block size check ===
     const int blockSize = 4;
@@ -57,16 +57,16 @@ int main(int argc, char *argv[]) {
     
     // Initialize hostA with boundary and initial conditions
     for (int i = 0; i < n; ++i) {
-        float boundary = 0.98f * (i + 1) * (i + 1) / float(n * n);
+        real_t boundary = 0.98f * (i + 1) * (i + 1) / real_t(n * n);
         hostA[i * m + 0] = boundary;
         for (int j = 1; j < m; ++j) {
-            float factor = float((m - j) * (m - j)) / float(m * m);
+            real_t factor = real_t((m - j) * (m - j)) / real_t(m * m);
             hostA[i * m + j] = boundary * factor;
         }
     }
 
     // Device pointers for GPU matrices
-    float *d_A, *d_B;
+    real_t *d_A, *d_B;
 
     // GPU memory allocation and data transfer to device
     cudaEvent_t ev_alloc_start, ev_alloc_stop;
@@ -79,16 +79,16 @@ int main(int argc, char *argv[]) {
     if (mode != MODE_CPU_ONLY) {
         cudaEventCreate(&ev_alloc_start); cudaEventCreate(&ev_alloc_stop);
         cudaEventRecord(ev_alloc_start);
-        cudaMalloc(&d_A, n * m * sizeof(float));
-        cudaMalloc(&d_B, n * m * sizeof(float));
+        cudaMalloc(&d_A, n * m * sizeof(real_t));
+        cudaMalloc(&d_B, n * m * sizeof(real_t));
         cudaEventRecord(ev_alloc_stop);
         cudaEventSynchronize(ev_alloc_stop);
         cudaEventElapsedTime(&time_alloc, ev_alloc_start, ev_alloc_stop);
 
         cudaEventCreate(&ev_copy_to_start); cudaEventCreate(&ev_copy_to_stop);
         cudaEventRecord(ev_copy_to_start);
-        cudaMemcpy(d_A, hostA.data(), n * m * sizeof(float), cudaMemcpyHostToDevice);
-        cudaMemcpy(d_B, hostA.data(), n * m * sizeof(float), cudaMemcpyHostToDevice);
+        cudaMemcpy(d_A, hostA.data(), n * m * sizeof(real_t), cudaMemcpyHostToDevice);
+        cudaMemcpy(d_B, hostA.data(), n * m * sizeof(real_t), cudaMemcpyHostToDevice);
         cudaEventRecord(ev_copy_to_stop);
         cudaEventSynchronize(ev_copy_to_stop);
         cudaEventElapsedTime(&time_copy_to, ev_copy_to_start, ev_copy_to_stop);
@@ -103,9 +103,9 @@ int main(int argc, char *argv[]) {
         cudaEventRecord(start);
     }
     
-    std::vector<float> cpuA = hostA;
-    std::vector<float> cpuB = hostA;
-    std::vector<float> cpu_avg(n);
+    std::vector<real_t> cpuA = hostA;
+    std::vector<real_t> cpuB = hostA;
+    std::vector<real_t> cpu_avg(n);
     float cpu_time_ms = 0.0f;
 
     // Run CPU version of the heat propagation
@@ -116,8 +116,8 @@ int main(int argc, char *argv[]) {
         compute_cpu_row_averages((p % 2 == 0 ? cpuA : cpuB), cpu_avg, n, m);
         auto cpu_end = std::chrono::high_resolution_clock::now();
 
-        std::chrono::duration<float, std::milli> duration_prop = cpu_mid - cpu_start;
-        std::chrono::duration<float, std::milli> duration_avg = cpu_end - cpu_mid;
+        std::chrono::duration<real_t, std::milli> duration_prop = cpu_mid - cpu_start;
+        std::chrono::duration<real_t, std::milli> duration_avg = cpu_end - cpu_mid;
         cpu_time_ms = duration_prop.count() + duration_avg.count();
     }
 
@@ -140,12 +140,12 @@ int main(int argc, char *argv[]) {
 
         cudaEventCreate(&ev_copy_back_start); cudaEventCreate(&ev_copy_back_stop);
         cudaEventRecord(ev_copy_back_start);
-        cudaMemcpy(hostB.data(), (p % 2 == 0 ? d_A : d_B), n * m * sizeof(float), cudaMemcpyDeviceToHost);
+        cudaMemcpy(hostB.data(), (p % 2 == 0 ? d_A : d_B), n * m * sizeof(real_t), cudaMemcpyDeviceToHost);
         cudaEventRecord(ev_copy_back_stop);
         cudaEventSynchronize(ev_copy_back_stop);
         cudaEventElapsedTime(&time_copy_back, ev_copy_back_start, ev_copy_back_stop);
 
-        float total_sum = 0.0f, min_val = hostB[0], max_val = hostB[0];
+        real_t total_sum = 0.0f, min_val = hostB[0], max_val = hostB[0];
         for (int i = 0; i < n * m; ++i) {
             total_sum += hostB[i];
             if (hostB[i] < min_val) min_val = hostB[i];
@@ -157,7 +157,7 @@ int main(int argc, char *argv[]) {
     }
     
     // Choose output matrix based on execution mode
-    const std::vector<float>& output_matrix = cpu_only ? (p % 2 == 0 ? cpuA : cpuB) : hostB;
+    const std::vector<real_t>& output_matrix = mode == MODE_CPU_ONLY ? (p % 2 == 0 ? cpuA : cpuB) : hostB;
 
     // Print final matrix if verbose flag is set
     std::cout << std::fixed << std::setprecision(6);
@@ -188,7 +188,7 @@ int main(int argc, char *argv[]) {
     // Compute and print row averages (CPU or GPU)
     if (do_avg) {
         std::cout << "Row averages after " << p << " iterations:\n";
-        if (cpu_only) {
+        if (mode == MODE_CPU_ONLY) {
             for (int i = 0; i < n; ++i) {
                 std::cout << "Row " << std::setw(3) << i << " avg = " << std::setw(10) << cpu_avg[i] << "\n";
             }
@@ -196,23 +196,23 @@ int main(int argc, char *argv[]) {
         else if(mode == MODE_BOTH) {
             cudaEventCreate(&ev_avg_start); cudaEventCreate(&ev_avg_stop);
             cudaEventRecord(ev_avg_start);
-            float* d_avg;
-            cudaMalloc(&d_avg, n * sizeof(float));
+            real_t* d_avg;
+            cudaMalloc(&d_avg, n * sizeof(real_t));
             launch_row_average((p % 2 == 0 ? d_A : d_B), d_avg, n, m);
             cudaEventRecord(ev_avg_stop);
             cudaEventSynchronize(ev_avg_stop);
             cudaEventElapsedTime(&time_avg, ev_avg_start, ev_avg_stop);
 
-            std::vector<float> host_avg(n);
-            cudaMemcpy(host_avg.data(), d_avg, n * sizeof(float), cudaMemcpyDeviceToHost);
+            std::vector<real_t> host_avg(n);
+            cudaMemcpy(host_avg.data(), d_avg, n * sizeof(real_t), cudaMemcpyDeviceToHost);
 
             for (int i = 0; i < n; ++i) {
                 std::cout << "Row " << std::setw(3) << i << " avg = " << std::setw(10) << host_avg[i] << "\n";
             }
 
-            float max_avg_diff = 0.0f;
+            real_t max_avg_diff = 0.0f;
             for (int i = 0; i < n; ++i) {
-                float diff = std::fabs(cpu_avg[i] - host_avg[i]);
+                real_t diff = std::fabs(cpu_avg[i] - host_avg[i]);
                 if (diff > 1e-6f) {
                     std::cout << "Row avg mismatch at row " << i << ": CPU=" << cpu_avg[i]
                               << ", GPU=" << host_avg[i]
@@ -228,12 +228,12 @@ int main(int argc, char *argv[]) {
 
     // Compare CPU and GPU matrices element-wise
     if (mode == MODE_BOTH) {
-        const std::vector<float>& cpu_matrix = (p % 2 == 0 ? cpuA : cpuB);
-        float max_diff = 0.0f;
+        const std::vector<real_t>& cpu_matrix = (p % 2 == 0 ? cpuA : cpuB);
+        real_t max_diff = 0.0f;
         for (int i = 0; i < n; ++i) {
             for (int j = 0; j < m; ++j) {
                 int idx = i * m + j;
-                float diff = std::fabs(cpu_matrix[idx] - hostB[idx]);
+                real_t diff = std::fabs(cpu_matrix[idx] - hostB[idx]);
                 if (diff > 1e-6f) {
                     std::cout << "Mismatch at (" << i << "," << j << "): "
                               << "CPU=" << cpu_matrix[idx]
@@ -247,7 +247,7 @@ int main(int argc, char *argv[]) {
     }
 
     // Free device memory
-    if (!cpu_only) {
+    if (mode != MODE_CPU_ONLY) {
         cudaFree(d_A);
         cudaFree(d_B);
     }

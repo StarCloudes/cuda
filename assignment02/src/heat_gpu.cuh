@@ -1,5 +1,6 @@
 #ifndef HEAT_GPU_CUH
 #define HEAT_GPU_CUH
+#include "real.h"
 
 // Declare GPU kernel launchers
 
@@ -12,7 +13,7 @@
  * @param m   Number of columns
  * @param p   Number of iterations
  */
- void launch_heat_propagation(float* d_A, float* d_B, int n, int m, int p, cudaStream_t stream = 0);
+ void launch_heat_propagation(real_t* d_A, real_t* d_B, int n, int m, int p, cudaStream_t stream = 0);
 
 /**
  * @brief Launches the GPU row average kernel.
@@ -23,6 +24,6 @@
  * @param m               Number of columns
  * @param stream          CUDA stream (can be 0 for default)
  */
-void launch_row_average(float* d_result_matrix, float* d_row_avg, int n, int m, cudaStream_t stream = 0);
+void launch_row_average(real_t* d_result_matrix, real_t* d_row_avg, int n, int m, cudaStream_t stream = 0);
 
 #endif // HEAT_GPU_CUH

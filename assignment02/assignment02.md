@@ -64,13 +64,11 @@ Implement the heat‑propagation model on the CPU in single precision, with conf
 
 
 
-### 4. **Usage Example**
+### 4. Running Command and Results
 
 In this task, we implemented **directional horizontal heat propagation** entirely on the CPU using finite differences. The radiator model includes cyclic wrap-around at each row to simulate a cylindrical pipe system. The computation was executed using the following parameters:
 
 ```
-./heat_sim --cpu-only 
-./heat_sim -n 4 -m 128 -p 5 --cpu-only
 ./heat_sim -n 4 -m 128 -p 5 --cpu-only -a 
 ./heat_sim -n 4 -m 128 -p 5 --cpu-only -a -v
 ```
@@ -112,13 +110,10 @@ In this section, we extend the CPU-based heat propagation model from Task 1 by i
 
 ​	Each block handles one row; each thread handles multiple elements (columns).
 
-### 2. **Usage Example**
+### 2. **Running Command  and Results**
 
 ```
-./heat_sim -n 256 -m 256 -p 5 -g
-./heat_sim -n 256 -m 256 -p 5 -v
-./heat_sim -n 256 -m 256 -p 5 -a 
-./heat_sim -n 256 -m 256 -p 5 -t 
+./heat_sim -n 256 -m 256 -p 10 -t 
 ```
 
 ![Screenshot 2025-04-19 at 2.30.44 AM](/Users/neil/Library/Application Support/typora-user-images/Screenshot 2025-04-19 at 2.30.44 AM.png)
@@ -126,4 +121,28 @@ In this section, we extend the CPU-based heat propagation model from Task 1 by i
 ### **3.Observations**
 
 - The CUDA implementation of the heat propagation simulation was successfully completed. As shown in the timing results, the GPU achieved a **speedup of over 73x** compared to the CPU for kernel + average computations. This demonstrates a significant performance benefit from GPU parallelism, especially on large grids (e.g., 256×256).
-- In terms of correctness, the final GPU matrix perfectly matched the CPU result with a **maximum matrix difference of 0.000000**, ensuring the implementation is both fast and accurate.
+
+- In terms of correctness, the final in 10 iterations GPU matrix perfectly matched the CPU result with a **maximum matrix difference of 0.000000**, ensuring the implementation is both fast and accurate.
+
+- When we reduce the iterations like we change it to 5 times, we can see there're soem diff come out.
+
+  ```
+  ./heat_sim -n 256 -m 256 -p 5 -t 
+  ```
+
+  ![Screenshot 2025-04-27 at 3.43.15 PM](/Users/neil/Library/Application Support/typora-user-images/Screenshot 2025-04-27 at 3.43.15 PM.png)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

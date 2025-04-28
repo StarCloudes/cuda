@@ -1,6 +1,7 @@
 #include "heat_cpu.h"
 #include <cmath>
 #include <iostream>
+#include "real.h"
 
 /**
  * @brief Simulates heat propagation on the CPU using a 2D matrix.
@@ -11,7 +12,7 @@
  * @param m Number of columns in the matrix.
  * @param p Number of iterations to simulate.
  */
-void cpu_heat_propagation(std::vector<float>& A, std::vector<float>& B, int n, int m, int p) {
+void cpu_heat_propagation(std::vector<real_t>& A, std::vector<real_t>& B, int n, int m, int p) {
     for (int iter = 0; iter < p; ++iter) {
         for (int i = 0; i < n; ++i) {
             for (int j = 0; j < m; ++j) {
@@ -26,7 +27,7 @@ void cpu_heat_propagation(std::vector<float>& A, std::vector<float>& B, int n, i
                     int jp2 = (j + 2) % m;
 
                     // Compute the weighted sum using the 5-point stencil formula
-                    float sum = 1.60f * A[i * m + jm2]
+                    real_t sum = 1.60f * A[i * m + jm2]
                               + 1.55f * A[i * m + jm1]
                               +        A[i * m + j]
                               + 0.60f * A[i * m + jp1]
@@ -48,15 +49,15 @@ void cpu_heat_propagation(std::vector<float>& A, std::vector<float>& B, int n, i
  * @param n Number of rows in the matrix.
  * @param m Number of columns in the matrix.
  */
-void compute_cpu_row_averages(const std::vector<float>& mat, std::vector<float>& avg, int n, int m) {
+void compute_cpu_row_averages(const std::vector<real_t>& mat, std::vector<real_t>& avg, int n, int m) {
     for (int i = 0; i < n; ++i) {
-        float sum = 0.0f;
+        real_t sum = 0.0f;
         for (int j = 0; j < m; ++j) {
             sum += mat[i * m + j];
         }
         avg[i] = sum / m;
     }
-    float total_sum = 0.0f, min_val = mat[0], max_val = mat[0];
+    real_t total_sum = 0.0f, min_val = mat[0], max_val = mat[0];
     for (size_t i = 0; i < mat.size(); ++i) {
         total_sum += mat[i];
         if (mat[i] < min_val) min_val = mat[i];

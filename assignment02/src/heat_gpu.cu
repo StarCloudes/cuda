@@ -3,9 +3,10 @@
 #include <iostream>
 #include <cuda_runtime.h>
 #include "heat_gpu.cuh"
+#include "real.h"
 
 // TODO 1: Device kernel for heat propagation (each thread handles one element in the matrix)
-__global__ void heat_propagate_kernel(float* next, const float* prev, int n, int m) {
+__global__ void heat_propagate_kernel(real_t* next, const real_t* prev, int n, int m) {
     // TODO: Compute (row, col) from threadIdx + blockIdx
     int row = blockIdx.y * blockDim.y + threadIdx.y; // which row
     int col = blockIdx.x * blockDim.x + threadIdx.x; // which column
@@ -35,7 +36,7 @@ __global__ void heat_propagate_kernel(float* next, const float* prev, int n, int
     int i_jp1 = row * m + jp1;
     int i_jp2 = row * m + jp2;
 
-    float sum = 1.60f * prev[i_jm2]
+    real_t sum = 1.60f * prev[i_jm2]
               + 1.55f * prev[i_jm1]
               +         prev[i_j]
               + 0.60f * prev[i_jp1]
@@ -45,15 +46,15 @@ __global__ void heat_propagate_kernel(float* next, const float* prev, int n, int
 }
 
 // TODO 2: Device kernel to compute per-row averages (for -a flag)
-__global__ void row_average_kernel(float* row_avg, const float* matrix, int n, int m) {
+__global__ void row_average_kernel(real_t* row_avg, const real_t* matrix, int n, int m) {
     // TODO: Each block handles one row, threads reduce over columns
     // Each block is responsible for processing one row 
     int row = blockIdx.x;
     int tid = threadIdx.x;
 
-    __shared__ float partial_sum[256]; // Max threads per block
+    __shared__ real_t partial_sum[256]; // Max threads per block
 
-    float local = 0.0f;
+    real_t local = 0.0f;
 
     for (int j = tid; j < m; j += blockDim.x) {
         local += matrix[row * m + j];
@@ -64,7 +65,7 @@ __global__ void row_average_kernel(float* row_avg, const float* matrix, int n, i
 
     // Row Average Calculation
     if (tid == 0) {
-        float sum = 0.0f;
+        real_t sum = 0.0f;
         for (int i = 0; i < blockDim.x; ++i) {
             sum += partial_sum[i];
         }
@@ -73,9 +74,10 @@ __global__ void row_average_kernel(float* row_avg, const float* matrix, int n, i
 }
 
 // TODO 3: Host wrapper for heat propagation
-void launch_heat_propagation(float* d_matrix_A, float* d_matrix_B, int n, int m, int iterations, cudaStream_t stream) {
+void launch_heat_propagation(real_t* d_matrix_A, real_t* d_matrix_B, int n, int m, int iterations, cudaStream_t stream) {
     // TODO: Configure block/grid size
-    dim3 blockDim(16, 16);
+    //dim3 blockDim(16, 16);
+    dim3 blockDim(BLOCK_X, BLOCK_Y);
     dim3 gridDim((m + blockDim.x - 1) / blockDim.x,
                  (n + blockDim.y - 1) / blockDim.y);
 
@@ -91,7 +93,7 @@ void launch_heat_propagation(float* d_matrix_A, float* d_matrix_B, int n, int m,
 }
 
 // TODO 4: Host wrapper for average computation
-void launch_row_average(float* d_result_matrix, float* d_row_avg, int n, int m, cudaStream_t stream) {
+void launch_row_average(real_t* d_result_matrix, real_t* d_row_avg, int n, int m, cudaStream_t stream) {
     // TODO: Configure grid and block, launch row_average_kernel
     int threads = 256; // adjust if m is very small
     row_average_kernel<<<n, threads, 0, stream>>>(d_row_avg, d_result_matrix, n, m);
