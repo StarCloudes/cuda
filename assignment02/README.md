@@ -9,12 +9,15 @@ This project implements a 1D heat propagation simulation using both CPU and GPU 
 
 **heat_gpu.cuh/.cu** (GPU kernel declarations and implementations.)
 
+**real.h** (USE_DOUBLE or USE_FLOAT.)
+
 
 ## 🚀 Build Instructions
 
 To compile the project, run: 
 ```
-make
+make heat_sim
+make heat_sim_dp
 ```
 
 ## 🧪 Usage
