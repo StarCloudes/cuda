@@ -90,6 +90,7 @@ int main(int argc, char *argv[]) {
 
 	double x,division=(b-a)/((double)(numberOfSamples));
 
+	// CPU calculation
 	if (cpu) {
 		gettimeofday(&expoStart, NULL);
 		for (ui=1;ui<=n;ui++) {
@@ -106,6 +107,7 @@ int main(int argc, char *argv[]) {
 	std::vector<float> resultsFloatGpu;
 	std::vector<double> resultsDoubleGpu;
 
+	//GPU calculation
 	if (gpu) {
 		resultsFloatGpu.resize(n * numberOfSamples);
 		resultsDoubleGpu.resize(n * numberOfSamples);
@@ -136,10 +138,8 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	if (verbose) {
-		if (cpu) {
-			outputResultsCpu (resultsFloatCpu,resultsDoubleCpu);
-		}
+	if (verbose && cpu) {
+		outputResultsCpu (resultsFloatCpu,resultsDoubleCpu);
 	}
 
 	// Output GPU results if verbose and GPU was run
@@ -155,6 +155,40 @@ int main(int argc, char *argv[]) {
 			}
 		}
 	}
+
+	// Compare results
+	if (cpu && gpu) {
+		int mismatchFloat = 0;
+		int mismatchDouble = 0;
+		double division = (b - a) / ((double)(numberOfSamples));
+	
+		for (unsigned int i = 1; i <= n; ++i) {
+			for (unsigned int j = 1; j <= numberOfSamples; ++j) {
+				unsigned int idx = (i - 1) * numberOfSamples + (j - 1);
+				float cpuF = resultsFloatCpu[i - 1][j - 1];
+				float gpuF = resultsFloatGpu[idx];
+				double cpuD = resultsDoubleCpu[i - 1][j - 1];
+				double gpuD = resultsDoubleGpu[idx];
+				double x = a + j * division;
+	
+				if (fabs(cpuF - gpuF) > 1e-5) {
+					mismatchFloat++;
+					std::cout << "[Float mismatch] (n=" << i << ", x=" << x
+							  << "): CPU=" << cpuF << ", GPU=" << gpuF << std::endl;
+				}
+	
+				if (fabs(cpuD - gpuD) > 1e-12) {
+					mismatchDouble++;
+					std::cout << "[Double mismatch] (n=" << i << ", x=" << x
+							  << "): CPU=" << cpuD << ", GPU=" << gpuD << std::endl;
+				}
+			}
+		}
+	
+		std::cout << "[Summary] Float mismatches : " << mismatchFloat << std::endl;
+		std::cout << "[Summary] Double mismatches: " << mismatchDouble << std::endl;
+	}
+
 	return 0;
 }
 
