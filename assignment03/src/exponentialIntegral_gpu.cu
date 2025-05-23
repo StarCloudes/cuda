@@ -2,8 +2,10 @@
 #include <cstdio>
 #include "exponentialIntegral_gpu.cuh"
 
+__constant__ int d_maxIterations;
+
 // Kernel function for float
-__device__ float exponentialIntegralFloatDevice(int n, float x, int maxIterations) {
+__device__ float exponentialIntegralFloatDevice(int n, float x) {
     const float eulerConstant = 0.5772156649015329f;
     const float epsilon = 1.E-30f;
     const float bigfloat = 3.4028235e+38f; // FLT_MAX
@@ -17,7 +19,7 @@ __device__ float exponentialIntegralFloatDevice(int n, float x, int maxIteration
         c = bigfloat;
         d = 1.0f / b;
         h = d;
-        for (i = 1; i <= maxIterations; i++) {
+        for (i = 1; i <= d_maxIterations; i++) {
             a = -i * (nm1 + i);
             b += 2.0f;
             d = 1.0f / (a * d + b);
@@ -31,7 +33,7 @@ __device__ float exponentialIntegralFloatDevice(int n, float x, int maxIteration
     } else {
         ans = (nm1 != 0 ? 1.0f / nm1 : -logf(x) - eulerConstant);
         fact = 1.0f;
-        for (i = 1; i <= maxIterations; i++) {
+        for (i = 1; i <= d_maxIterations; i++) {
             fact *= -x / i;
             if (i != nm1)
                 del = -fact / (i - nm1);
@@ -47,7 +49,7 @@ __device__ float exponentialIntegralFloatDevice(int n, float x, int maxIteration
     }
 }
 
-__global__ void floatKernel(int n, int m, float a, float b, float* result, int maxIterations) {
+__global__ void floatKernel(int n, int m, float a, float b, float* result) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     int total = n * m;
     float division = (b - a) / m;
@@ -56,13 +58,13 @@ __global__ void floatKernel(int n, int m, float a, float b, float* result, int m
         int i = idx / m + 1;
         int j = idx % m + 1;
         float x = a + j * division;
-        result[idx] = exponentialIntegralFloatDevice(i, x, maxIterations);
+        result[idx] = exponentialIntegralFloatDevice(i, x);
         idx += blockDim.x * gridDim.x;
     }
 }
 
 
-__device__ double exponentialIntegralDoubleDevice(int n, double x, int maxIterations) {
+__device__ double exponentialIntegralDoubleDevice(int n, double x) {
     const double eulerConstant = 0.5772156649015329;
     const double epsilon = 1.E-30;
     const double bigDouble = 1.7976931348623157e+308;  // DBL_MAX
@@ -76,7 +78,7 @@ __device__ double exponentialIntegralDoubleDevice(int n, double x, int maxIterat
         c = bigDouble;
         d = 1.0 / b;
         h = d;
-        for (i = 1; i <= maxIterations; i++) {
+        for (i = 1; i <= d_maxIterations; i++) {
             a = -i * (nm1 + i);
             b += 2.0;
             d = 1.0 / (a * d + b);
@@ -90,7 +92,7 @@ __device__ double exponentialIntegralDoubleDevice(int n, double x, int maxIterat
     } else {
         ans = (nm1 != 0 ? 1.0 / nm1 : -log(x) - eulerConstant);
         fact = 1.0;
-        for (i = 1; i <= maxIterations; i++) {
+        for (i = 1; i <= d_maxIterations; i++) {
             fact *= -x / i;
             if (i != nm1)
                 del = -fact / (i - nm1);
@@ -106,7 +108,7 @@ __device__ double exponentialIntegralDoubleDevice(int n, double x, int maxIterat
     }
 }
 
-__global__ void doubleKernel(int n, int m, double a, double b, double* result, int maxIterations) {
+__global__ void doubleKernel(int n, int m, double a, double b, double* result) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     int total = n * m;
     double division = (b - a) / m;
@@ -114,7 +116,7 @@ __global__ void doubleKernel(int n, int m, double a, double b, double* result, i
         int i = idx / m + 1;
         int j = idx % m + 1;
         double x = a + j * division;
-        result[idx] = exponentialIntegralDoubleDevice(i, x, maxIterations);
+        result[idx] = exponentialIntegralDoubleDevice(i, x);
         idx += blockDim.x * gridDim.x;
     }
 }
@@ -136,11 +138,15 @@ void exponentialIntegralFloatGPUWrapper(int n, int m, float a, float b, float* r
     cudaMalloc(&d_result, total * sizeof(float));
     cudaEventRecord(malloc_end);
 
+    // Copy maxIterations to constant memory
+    int maxIters = 1000;
+    cudaMemcpyToSymbol(d_maxIterations, &maxIters, sizeof(int));
+
     // kernel
     int blockSize = 256;
     int gridSize = (total + blockSize - 1) / blockSize;
     cudaEventRecord(kernel_start);
-    floatKernel<<<gridSize, blockSize>>>(n, m, a, b, d_result, 1000);
+    floatKernel<<<gridSize, blockSize>>>(n, m, a, b, d_result);
     cudaEventRecord(kernel_end);
 
     // memcpy
@@ -186,11 +192,15 @@ void exponentialIntegralDoubleGPUWrapper(int n, int m, double a, double b, doubl
     cudaMalloc(&d_result, total * sizeof(double));
     cudaEventRecord(malloc_end);
 
+    // Copy maxIterations to constant memory
+    int maxIters = 1000;
+    cudaMemcpyToSymbol(d_maxIterations, &maxIters, sizeof(int));
+
     // kernel
     int blockSize = 256;
     int gridSize = (total + blockSize - 1) / blockSize;
     cudaEventRecord(kernel_start);
-    doubleKernel<<<gridSize, blockSize>>>(n, m, a, b, d_result, 1000);
+    doubleKernel<<<gridSize, blockSize>>>(n, m, a, b, d_result);
     cudaEventRecord(kernel_end);
 
     // memcpy
