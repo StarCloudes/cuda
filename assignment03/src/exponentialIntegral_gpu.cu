@@ -228,3 +228,99 @@ void exponentialIntegralDoubleGPUWrapper(int n, int m, double a, double b, doubl
     cudaEventDestroy(kernel_start); cudaEventDestroy(kernel_end);
     cudaEventDestroy(memcpy_start); cudaEventDestroy(memcpy_end);
 }
+
+// Stream version for float
+void exponentialIntegralFloatGPUStreamWrapper(int n, int m, float a, float b, float* result, float* totalTimeSecOut) {
+    int total = n * m;
+    float* d_result;
+
+    cudaStream_t stream;
+    cudaStreamCreate(&stream);
+
+    // Timing
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+    cudaEventRecord(start, stream);
+
+    int maxIters = 1000;
+    cudaMemcpyToSymbolAsync(d_maxIterations, &maxIters, sizeof(int), 0, cudaMemcpyHostToDevice, stream);
+    cudaMallocAsync(&d_result, total * sizeof(float), stream);
+
+    int blockSize = 256;
+    int gridSize = (total + blockSize - 1) / blockSize;
+    floatKernel<<<gridSize, blockSize, 0, stream>>>(n, m, a, b, d_result);
+
+    cudaMemcpyAsync(result, d_result, total * sizeof(float), cudaMemcpyDeviceToHost, stream);
+    cudaFreeAsync(d_result, stream);
+
+    cudaEventRecord(stop, stream);
+    cudaEventSynchronize(stop);
+
+    float milliseconds = 0;
+    cudaEventElapsedTime(&milliseconds, start, stop);
+    // Print timing breakdown (approximate, since all overlap in stream)
+    float malloc_time = 0.0f, kernel_time = 0.0f, memcpy_time = 0.0f;
+    cudaEventElapsedTime(&malloc_time, start, start); // no actual malloc event split
+    cudaEventElapsedTime(&kernel_time, start, stop);  // approximate total kernel+overlap
+    cudaEventElapsedTime(&memcpy_time, start, stop);  // approximate total memcpy+overlap
+    printf("[GPU float (stream)] malloc time     : %.6f seconds\n", malloc_time / 1000.0f);
+    printf("[GPU float (stream)] kernel time     : %.6f seconds\n", kernel_time / 1000.0f);
+    printf("[GPU float (stream)] memcpy time     : %.6f seconds\n", memcpy_time / 1000.0f);
+    printf("[GPU float (stream)] total cuda time : %.6f seconds\n", milliseconds / 1000.0f);
+    if (totalTimeSecOut) {
+        *totalTimeSecOut = milliseconds / 1000.0f;
+    }
+
+    cudaEventDestroy(start);
+    cudaEventDestroy(stop);
+    cudaStreamDestroy(stream);
+}
+
+// Stream version for double
+void exponentialIntegralDoubleGPUStreamWrapper(int n, int m, double a, double b, double* result, float* totalTimeSecOut) {
+    int total = n * m;
+    double* d_result;
+
+    cudaStream_t stream;
+    cudaStreamCreate(&stream);
+
+    // Timing
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+    cudaEventRecord(start, stream);
+
+    int maxIters = 1000;
+    cudaMemcpyToSymbolAsync(d_maxIterations, &maxIters, sizeof(int), 0, cudaMemcpyHostToDevice, stream);
+    cudaMallocAsync(&d_result, total * sizeof(double), stream);
+
+    int blockSize = 256;
+    int gridSize = (total + blockSize - 1) / blockSize;
+    doubleKernel<<<gridSize, blockSize, 0, stream>>>(n, m, a, b, d_result);
+
+    cudaMemcpyAsync(result, d_result, total * sizeof(double), cudaMemcpyDeviceToHost, stream);
+    cudaFreeAsync(d_result, stream);
+
+    cudaEventRecord(stop, stream);
+    cudaEventSynchronize(stop);
+
+    float milliseconds = 0;
+    cudaEventElapsedTime(&milliseconds, start, stop);
+    // Print timing breakdown (approximate, since all overlap in stream)
+    float malloc_time = 0.0f, kernel_time = 0.0f, memcpy_time = 0.0f;
+    cudaEventElapsedTime(&malloc_time, start, start); // no actual malloc event split
+    cudaEventElapsedTime(&kernel_time, start, stop);  // approximate total kernel+overlap
+    cudaEventElapsedTime(&memcpy_time, start, stop);  // approximate total memcpy+overlap
+    printf("[GPU double (stream)] malloc time     : %.6f seconds\n", malloc_time / 1000.0f);
+    printf("[GPU double (stream)] kernel time     : %.6f seconds\n", kernel_time / 1000.0f);
+    printf("[GPU double (stream)] memcpy time     : %.6f seconds\n", memcpy_time / 1000.0f);
+    printf("[GPU double (stream)] total cuda time : %.6f seconds\n", milliseconds / 1000.0f);
+    if (totalTimeSecOut) {
+        *totalTimeSecOut = milliseconds / 1000.0f;
+    }
+
+    cudaEventDestroy(start);
+    cudaEventDestroy(stop);
+    cudaStreamDestroy(stream);
+}

@@ -121,6 +121,10 @@ int main(int argc, char *argv[]) {
 		// Call both float and double precision GPU wrappers
 		exponentialIntegralFloatGPUWrapper(n, numberOfSamples, (float)a, (float)b, flatResultFloat, &gpuTimeFloat);
 		exponentialIntegralDoubleGPUWrapper(n, numberOfSamples, a, b, flatResultDouble, &gpuTimeDouble);
+
+		// Call both float and double precision GPU wrappers (stream-based versions)
+		//exponentialIntegralFloatGPUStreamWrapper(n, numberOfSamples, (float)a, (float)b, flatResultFloat, &gpuTimeFloat);
+		//exponentialIntegralDoubleGPUStreamWrapper(n, numberOfSamples, a, b, flatResultDouble, &gpuTimeDouble);
 		timeTotalGpu = gpuTimeFloat + gpuTimeDouble;
 	}
 
