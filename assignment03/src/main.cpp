@@ -32,9 +32,10 @@ double a,b;	// The interval that we are going to use
 
 int main(int argc, char *argv[]) {
 	unsigned int ui,uj;
-	cpu=true;
+	cpu=false;
 	verbose=false;
 	timing=false;
+	bool gpu = true;
 	// n is the maximum order of the exponential integral that we are going to test
 	// numberOfSamples is the number of samples in the interval [0,10] that we are going to calculate
 	n=10;
@@ -74,6 +75,7 @@ int main(int argc, char *argv[]) {
 	std::vector< std::vector< double > > resultsDoubleCpu;
 
 	double timeTotalCpu=0.0;
+	double timeTotalGpu=0.0;
 
 	try {
 		resultsFloatCpu.resize(n,vector< float >(numberOfSamples));
@@ -104,7 +106,7 @@ int main(int argc, char *argv[]) {
 	std::vector<float> resultsFloatGpu;
 	std::vector<double> resultsDoubleGpu;
 
-	if (!cpu) {
+	if (gpu) {
 		resultsFloatGpu.resize(n * numberOfSamples);
 		resultsDoubleGpu.resize(n * numberOfSamples);
 
@@ -112,21 +114,44 @@ int main(int argc, char *argv[]) {
 		double* flatResultDouble = resultsDoubleGpu.data();
 
 		gettimeofday(&expoStart, NULL);
+		// Call both float and double precision GPU wrappers
 		exponentialIntegralFloatGPUWrapper(n, numberOfSamples, (float)a, (float)b, flatResultFloat);
 		exponentialIntegralDoubleGPUWrapper(n, numberOfSamples, a, b, flatResultDouble);
 		gettimeofday(&expoEnd, NULL);
+		timeTotalGpu = ((expoEnd.tv_sec + expoEnd.tv_usec * 0.000001) -
+		                (expoStart.tv_sec + expoStart.tv_usec * 0.000001));
 	}
 
 
 	if (timing) {
 		if (cpu) {
-			printf ("calculating the exponentials on the cpu took: %f seconds\n",timeTotalCpu);
+			printf("[CPU] Execution time: %.6f seconds\n", timeTotalCpu);
+		}
+		if (gpu) {
+			printf("[GPU] Execution time: %.6f seconds\n", timeTotalGpu);
+		}
+		if (cpu && gpu && timeTotalGpu > 0.0) {
+			printf("[Speedup] CPU/GPU = %.2fx\n", timeTotalCpu / timeTotalGpu);
 		}
 	}
 
 	if (verbose) {
 		if (cpu) {
 			outputResultsCpu (resultsFloatCpu,resultsDoubleCpu);
+		}
+	}
+
+	// Output GPU results if verbose and GPU was run
+	if (verbose && gpu) {
+		double division = (b - a) / ((double)(numberOfSamples));
+		for (unsigned int i = 1; i <= n; ++i) {
+			for (unsigned int j = 1; j <= numberOfSamples; ++j) {
+				float valF = resultsFloatGpu[(i - 1) * numberOfSamples + (j - 1)];
+				double valD = resultsDoubleGpu[(i - 1) * numberOfSamples + (j - 1)];
+				double x = a + j * division;
+				std::cout << "[GPU] exponentialIntegralDouble (" << i << "," << x << ")=" << valD << " ,";
+				std::cout << "exponentialIntegralFloat  (" << i << "," << x << ")=" << valF << std::endl;
+			}
 		}
 	}
 	return 0;
@@ -264,8 +289,10 @@ int parseArguments (int argc, char *argv[]) {
 
 	while ((c = getopt (argc, argv, "cghn:m:a:b:tv")) != -1) {
 		switch(c) {
+			case 'g':
+				cpu = true; break;   // enable CPU test only if -g is given
 			case 'c':
-				cpu=false; break;	 //Skip the CPU test
+				cpu = false; break;  // explicitly disable CPU test
 			case 'h':
 				printUsage(); exit(0); break;
 			case 'i':
@@ -299,7 +326,7 @@ void printUsage () {
 	printf("      -a   value   : will set the a value of the (a,b) interval in which the samples are taken to value (default: 0.0)\n");
 	printf("      -b   value   : will set the b value of the (a,b) interval in which the samples are taken to value (default: 10.0)\n");
 	printf("      -c           : will skip the CPU test\n");
-	printf("      -g           : will skip the GPU test\n");
+	printf("      -g           : will run the CPU test\n");
 	printf("      -h           : will show this usage\n");
 	printf("      -i   size    : will set the number of iterations to size (default: 2000000000)\n");
 	printf("      -n   size    : will set the n (the order up to which we are calculating the exponential integrals) to size (default: 10)\n");
