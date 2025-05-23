@@ -119,23 +119,102 @@ __global__ void doubleKernel(int n, int m, double a, double b, double* result, i
     }
 }
 
-void exponentialIntegralFloatGPUWrapper(int n, int m, float a, float b, float* result) {
+void exponentialIntegralFloatGPUWrapper(int n, int m, float a, float b, float* result, float* totalTimeSecOut) {
     int total = n * m;
     float* d_result;
-    cudaMalloc(&d_result, total * sizeof(float));
 
+    // Timing events
+    cudaEvent_t malloc_start, malloc_end, kernel_start, kernel_end, memcpy_start, memcpy_end;
+    cudaEventCreate(&malloc_start); cudaEventCreate(&malloc_end);
+    cudaEventCreate(&kernel_start); cudaEventCreate(&kernel_end);
+    cudaEventCreate(&memcpy_start); cudaEventCreate(&memcpy_end);
+
+    float malloc_time = 0, kernel_time = 0, memcpy_time = 0;
+
+    // malloc
+    cudaEventRecord(malloc_start);
+    cudaMalloc(&d_result, total * sizeof(float));
+    cudaEventRecord(malloc_end);
+
+    // kernel
     int blockSize = 256;
     int gridSize = (total + blockSize - 1) / blockSize;
-    floatKernel<<<gridSize, blockSize>>>(n, m, a, b, d_result, 1000); // maxIter
+    cudaEventRecord(kernel_start);
+    floatKernel<<<gridSize, blockSize>>>(n, m, a, b, d_result, 1000);
+    cudaEventRecord(kernel_end);
 
+    // memcpy
+    cudaEventRecord(memcpy_start);
     cudaMemcpy(result, d_result, total * sizeof(float), cudaMemcpyDeviceToHost);
     cudaFree(d_result);
+    cudaEventRecord(memcpy_end);
+
+    // sync & measure
+    cudaEventSynchronize(memcpy_end);
+    cudaEventElapsedTime(&malloc_time, malloc_start, malloc_end);
+    cudaEventElapsedTime(&kernel_time, kernel_start, kernel_end);
+    cudaEventElapsedTime(&memcpy_time, memcpy_start, memcpy_end);
+
+    // print all
+    printf("[GPU float] malloc time     : %.6f seconds\n", malloc_time / 1000.0f);
+    printf("[GPU float] kernel time     : %.6f seconds\n", kernel_time / 1000.0f);
+    printf("[GPU float] memcpy time     : %.6f seconds\n", memcpy_time / 1000.0f);
+    printf("[GPU float] total cuda time : %.6f seconds\n", (malloc_time + kernel_time + memcpy_time) / 1000.0f);
+
+    *totalTimeSecOut = (malloc_time + kernel_time + memcpy_time) / 1000.0f;
+
+    // cleanup
+    cudaEventDestroy(malloc_start); cudaEventDestroy(malloc_end);
+    cudaEventDestroy(kernel_start); cudaEventDestroy(kernel_end);
+    cudaEventDestroy(memcpy_start); cudaEventDestroy(memcpy_end);
 }
 
-void exponentialIntegralDoubleGPUWrapper(int n, int m, double a, double b, double* result) {
+void exponentialIntegralDoubleGPUWrapper(int n, int m, double a, double b, double* result, float* totalTimeSecOut) {
+    int total = n * m;
     double* d_result;
-    cudaMalloc(&d_result, n * m * sizeof(double));
-    doubleKernel<<<(n * m + 255)/256, 256>>>(n, m, a, b, d_result, 1000);
-    cudaMemcpy(result, d_result, n * m * sizeof(double), cudaMemcpyDeviceToHost);
+
+    // Timing events
+    cudaEvent_t malloc_start, malloc_end, kernel_start, kernel_end, memcpy_start, memcpy_end;
+    cudaEventCreate(&malloc_start); cudaEventCreate(&malloc_end);
+    cudaEventCreate(&kernel_start); cudaEventCreate(&kernel_end);
+    cudaEventCreate(&memcpy_start); cudaEventCreate(&memcpy_end);
+
+    float malloc_time = 0, kernel_time = 0, memcpy_time = 0;
+
+    // malloc
+    cudaEventRecord(malloc_start);
+    cudaMalloc(&d_result, total * sizeof(double));
+    cudaEventRecord(malloc_end);
+
+    // kernel
+    int blockSize = 256;
+    int gridSize = (total + blockSize - 1) / blockSize;
+    cudaEventRecord(kernel_start);
+    doubleKernel<<<gridSize, blockSize>>>(n, m, a, b, d_result, 1000);
+    cudaEventRecord(kernel_end);
+
+    // memcpy
+    cudaEventRecord(memcpy_start);
+    cudaMemcpy(result, d_result, total * sizeof(double), cudaMemcpyDeviceToHost);
     cudaFree(d_result);
+    cudaEventRecord(memcpy_end);
+
+    // sync & measure
+    cudaEventSynchronize(memcpy_end);
+    cudaEventElapsedTime(&malloc_time, malloc_start, malloc_end);
+    cudaEventElapsedTime(&kernel_time, kernel_start, kernel_end);
+    cudaEventElapsedTime(&memcpy_time, memcpy_start, memcpy_end);
+
+    // print all
+    printf("[GPU double] malloc time     : %.6f seconds\n", malloc_time / 1000.0f);
+    printf("[GPU double] kernel time     : %.6f seconds\n", kernel_time / 1000.0f);
+    printf("[GPU double] memcpy time     : %.6f seconds\n", memcpy_time / 1000.0f);
+    printf("[GPU double] total cuda time : %.6f seconds\n", (malloc_time + kernel_time + memcpy_time) / 1000.0f);
+
+    *totalTimeSecOut = (malloc_time + kernel_time + memcpy_time) / 1000.0f;
+
+    // cleanup
+    cudaEventDestroy(malloc_start); cudaEventDestroy(malloc_end);
+    cudaEventDestroy(kernel_start); cudaEventDestroy(kernel_end);
+    cudaEventDestroy(memcpy_start); cudaEventDestroy(memcpy_end);
 }

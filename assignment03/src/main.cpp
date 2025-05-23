@@ -113,13 +113,14 @@ int main(int argc, char *argv[]) {
 		float* flatResultFloat = resultsFloatGpu.data();
 		double* flatResultDouble = resultsDoubleGpu.data();
 
-		gettimeofday(&expoStart, NULL);
+		float gpuTimeFloat = 0.0f;
+		float gpuTimeDouble = 0.0f;
+
 		// Call both float and double precision GPU wrappers
-		exponentialIntegralFloatGPUWrapper(n, numberOfSamples, (float)a, (float)b, flatResultFloat);
-		exponentialIntegralDoubleGPUWrapper(n, numberOfSamples, a, b, flatResultDouble);
-		gettimeofday(&expoEnd, NULL);
-		timeTotalGpu = ((expoEnd.tv_sec + expoEnd.tv_usec * 0.000001) -
-		                (expoStart.tv_sec + expoStart.tv_usec * 0.000001));
+		exponentialIntegralFloatGPUWrapper(n, numberOfSamples, (float)a, (float)b, flatResultFloat, &gpuTimeFloat);
+		exponentialIntegralDoubleGPUWrapper(n, numberOfSamples, a, b, flatResultDouble, &gpuTimeDouble);
+
+		timeTotalGpu = gpuTimeFloat + gpuTimeDouble;
 	}
 
 
@@ -130,8 +131,8 @@ int main(int argc, char *argv[]) {
 		if (gpu) {
 			printf("[GPU] Execution time: %.6f seconds\n", timeTotalGpu);
 		}
-		if (cpu && gpu && timeTotalGpu > 0.0) {
-			printf("[Speedup] CPU/GPU = %.2fx\n", timeTotalCpu / timeTotalGpu);
+		if (cpu && timeTotalGpu > 0.0) {
+			printf("[Speedup] CPU / GPU total = %.2fx\n", timeTotalCpu / timeTotalGpu);
 		}
 	}
 
