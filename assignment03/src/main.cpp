@@ -13,6 +13,8 @@
 #include <sys/time.h>
 #include <time.h>
 #include <unistd.h>
+#include "exponentialIntegral_gpu.cuh"
+
 
 using namespace std;
 
@@ -98,6 +100,17 @@ int main(int argc, char *argv[]) {
 		gettimeofday(&expoEnd, NULL);
 		timeTotalCpu=((expoEnd.tv_sec + expoEnd.tv_usec*0.000001) - (expoStart.tv_sec + expoStart.tv_usec*0.000001));
 	}
+
+	std::vector< std::vector< float  > > resultsFloatGpu;
+	std::vector< std::vector< double > > resultsDoubleGpu;
+
+	if (!cpu) {
+	    gettimeofday(&expoStart, NULL);
+	    exponentialIntegralFloatGPUWrapper(n, numberOfSamples, a, b, &resultsFloatGpu[0][0]);
+	    exponentialIntegralDoubleGPUWrapper(n, numberOfSamples, a, b, &resultsDoubleGpu[0][0]);
+	    gettimeofday(&expoEnd, NULL);
+	}
+
 
 	if (timing) {
 		if (cpu) {
