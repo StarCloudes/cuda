@@ -101,14 +101,20 @@ int main(int argc, char *argv[]) {
 		timeTotalCpu=((expoEnd.tv_sec + expoEnd.tv_usec*0.000001) - (expoStart.tv_sec + expoStart.tv_usec*0.000001));
 	}
 
-	std::vector< std::vector< float  > > resultsFloatGpu;
-	std::vector< std::vector< double > > resultsDoubleGpu;
+	std::vector<float> resultsFloatGpu;
+	std::vector<double> resultsDoubleGpu;
 
 	if (!cpu) {
-	    gettimeofday(&expoStart, NULL);
-	    exponentialIntegralFloatGPUWrapper(n, numberOfSamples, a, b, &resultsFloatGpu[0][0]);
-	    exponentialIntegralDoubleGPUWrapper(n, numberOfSamples, a, b, &resultsDoubleGpu[0][0]);
-	    gettimeofday(&expoEnd, NULL);
+		resultsFloatGpu.resize(n * numberOfSamples);
+		resultsDoubleGpu.resize(n * numberOfSamples);
+
+		float* flatResultFloat = resultsFloatGpu.data();
+		double* flatResultDouble = resultsDoubleGpu.data();
+
+		gettimeofday(&expoStart, NULL);
+		exponentialIntegralFloatGPUWrapper(n, numberOfSamples, (float)a, (float)b, flatResultFloat);
+		exponentialIntegralDoubleGPUWrapper(n, numberOfSamples, a, b, flatResultDouble);
+		gettimeofday(&expoEnd, NULL);
 	}
 
 
