@@ -1,0 +1,374 @@
+Benchmark Results - Sun 25 May 16:31:13 IST 2025
+----------------------------------------
+==== Matrix size: n=5000, m=5000 ====
+--- Testing blockSize=64 ---
+[GPU float] malloc time     : 0.000094 seconds
+[GPU float] kernel time     : 0.001417 seconds
+[GPU float] memcpy time     : 0.016416 seconds
+[GPU float] total cuda time : 0.017927 seconds
+[GPU double] malloc time     : 0.000084 seconds
+[GPU double] kernel time     : 0.052152 seconds
+[GPU double] memcpy time     : 0.032401 seconds
+[GPU double] total cuda time : 0.084637 seconds
+[CPU] Execution time: 2.728345 seconds
+[GPU] Execution time: 0.102564 seconds
+[Speedup] CPU / GPU total = 26.60x
+[Summary] Float mismatches : 0
+[Summary] Double mismatches: 0
+
+--- Testing blockSize=128 ---
+[GPU float] malloc time     : 0.000104 seconds
+[GPU float] kernel time     : 0.001413 seconds
+[GPU float] memcpy time     : 0.016538 seconds
+[GPU float] total cuda time : 0.018055 seconds
+[GPU double] malloc time     : 0.001041 seconds
+[GPU double] kernel time     : 0.052188 seconds
+[GPU double] memcpy time     : 0.032720 seconds
+[GPU double] total cuda time : 0.085949 seconds
+[CPU] Execution time: 2.745564 seconds
+[GPU] Execution time: 0.104004 seconds
+[Speedup] CPU / GPU total = 26.40x
+[Summary] Float mismatches : 0
+[Summary] Double mismatches: 0
+
+--- Testing blockSize=256 ---
+[GPU float] malloc time     : 0.000117 seconds
+[GPU float] kernel time     : 0.001438 seconds
+[GPU float] memcpy time     : 0.016560 seconds
+[GPU float] total cuda time : 0.018116 seconds
+[GPU double] malloc time     : 0.001041 seconds
+[GPU double] kernel time     : 0.052175 seconds
+[GPU double] memcpy time     : 0.032474 seconds
+[GPU double] total cuda time : 0.085690 seconds
+[CPU] Execution time: 2.725105 seconds
+[GPU] Execution time: 0.103805 seconds
+[Speedup] CPU / GPU total = 26.25x
+[Summary] Float mismatches : 0
+[Summary] Double mismatches: 0
+
+--- Testing blockSize=512 ---
+[GPU float] malloc time     : 0.000103 seconds
+[GPU float] kernel time     : 0.001567 seconds
+[GPU float] memcpy time     : 0.016450 seconds
+[GPU float] total cuda time : 0.018120 seconds
+[GPU double] malloc time     : 0.000082 seconds
+[GPU double] kernel time     : 0.052140 seconds
+[GPU double] memcpy time     : 0.032517 seconds
+[GPU double] total cuda time : 0.084739 seconds
+[CPU] Execution time: 2.735155 seconds
+[GPU] Execution time: 0.102859 seconds
+[Speedup] CPU / GPU total = 26.59x
+[Summary] Float mismatches : 0
+[Summary] Double mismatches: 0
+
+
+==== Matrix size: n=8192, m=8192 ====
+--- Testing blockSize=64 ---
+[GPU float] malloc time     : 0.000094 seconds
+[GPU float] kernel time     : 0.003549 seconds
+[GPU float] memcpy time     : 0.043627 seconds
+[GPU float] total cuda time : 0.047271 seconds
+[GPU double] malloc time     : 0.001046 seconds
+[GPU double] kernel time     : 0.124360 seconds
+[GPU double] memcpy time     : 0.086668 seconds
+[GPU double] total cuda time : 0.212074 seconds
+[CPU] Execution time: 6.991616 seconds
+[GPU] Execution time: 0.259345 seconds
+[Speedup] CPU / GPU total = 26.96x
+[Summary] Float mismatches : 0
+[Summary] Double mismatches: 0
+
+--- Testing blockSize=128 ---
+[GPU float] malloc time     : 0.000096 seconds
+[GPU float] kernel time     : 0.003545 seconds
+[GPU float] memcpy time     : 0.043747 seconds
+[GPU float] total cuda time : 0.047389 seconds
+[GPU double] malloc time     : 0.001042 seconds
+[GPU double] kernel time     : 0.133588 seconds
+[GPU double] memcpy time     : 0.087907 seconds
+[GPU double] total cuda time : 0.222537 seconds
+[CPU] Execution time: 7.021402 seconds
+[GPU] Execution time: 0.269926 seconds
+[Speedup] CPU / GPU total = 26.01x
+[Summary] Float mismatches : 0
+[Summary] Double mismatches: 0
+
+--- Testing blockSize=256 ---
+[GPU float] malloc time     : 0.000096 seconds
+[GPU float] kernel time     : 0.003586 seconds
+[GPU float] memcpy time     : 0.043422 seconds
+[GPU float] total cuda time : 0.047104 seconds
+[GPU double] malloc time     : 0.001044 seconds
+[GPU double] kernel time     : 0.126261 seconds
+[GPU double] memcpy time     : 0.086481 seconds
+[GPU double] total cuda time : 0.213785 seconds
+[CPU] Execution time: 6.994776 seconds
+[GPU] Execution time: 0.260889 seconds
+[Speedup] CPU / GPU total = 26.81x
+[Summary] Float mismatches : 0
+[Summary] Double mismatches: 0
+
+--- Testing blockSize=512 ---
+[GPU float] malloc time     : 0.000113 seconds
+[GPU float] kernel time     : 0.003756 seconds
+[GPU float] memcpy time     : 0.043658 seconds
+[GPU float] total cuda time : 0.047526 seconds
+[GPU double] malloc time     : 0.001040 seconds
+[GPU double] kernel time     : 0.133830 seconds
+[GPU double] memcpy time     : 0.087353 seconds
+[GPU double] total cuda time : 0.222223 seconds
+[CPU] Execution time: 7.016039 seconds
+[GPU] Execution time: 0.269749 seconds
+[Speedup] CPU / GPU total = 26.01x
+[Summary] Float mismatches : 0
+[Summary] Double mismatches: 0
+
+
+==== Matrix size: n=16384, m=16384 ====
+--- Testing blockSize=64 ---
+[GPU float] malloc time     : 0.000141 seconds
+[GPU float] kernel time     : 0.013256 seconds
+[GPU float] memcpy time     : 0.175805 seconds
+[GPU float] total cuda time : 0.189202 seconds
+[GPU double] malloc time     : 0.001067 seconds
+[GPU double] kernel time     : 0.425480 seconds
+[GPU double] memcpy time     : 0.351615 seconds
+[GPU double] total cuda time : 0.778163 seconds
+[CPU] Execution time: 26.281944 seconds
+[GPU] Execution time: 0.967365 seconds
+[Speedup] CPU / GPU total = 27.17x
+[Summary] Float mismatches : 0
+[Summary] Double mismatches: 0
+
+--- Testing blockSize=128 ---
+[GPU float] malloc time     : 0.000139 seconds
+[GPU float] kernel time     : 0.013115 seconds
+[GPU float] memcpy time     : 0.174989 seconds
+[GPU float] total cuda time : 0.188244 seconds
+[GPU double] malloc time     : 0.001074 seconds
+[GPU double] kernel time     : 0.425427 seconds
+[GPU double] memcpy time     : 0.350758 seconds
+[GPU double] total cuda time : 0.777259 seconds
+[CPU] Execution time: 26.281580 seconds
+[GPU] Execution time: 0.965503 seconds
+[Speedup] CPU / GPU total = 27.22x
+[Summary] Float mismatches : 0
+[Summary] Double mismatches: 0
+
+--- Testing blockSize=256 ---
+[GPU float] malloc time     : 0.000137 seconds
+[GPU float] kernel time     : 0.013080 seconds
+[GPU float] memcpy time     : 0.175066 seconds
+[GPU float] total cuda time : 0.188283 seconds
+[GPU double] malloc time     : 0.001071 seconds
+[GPU double] kernel time     : 0.425472 seconds
+[GPU double] memcpy time     : 0.349359 seconds
+[GPU double] total cuda time : 0.775902 seconds
+[CPU] Execution time: 26.267830 seconds
+[GPU] Execution time: 0.964185 seconds
+[Speedup] CPU / GPU total = 27.24x
+[Summary] Float mismatches : 0
+[Summary] Double mismatches: 0
+
+--- Testing blockSize=512 ---
+[GPU float] malloc time     : 0.000137 seconds
+[GPU float] kernel time     : 0.013818 seconds
+[GPU float] memcpy time     : 0.173570 seconds
+[GPU float] total cuda time : 0.187525 seconds
+[GPU double] malloc time     : 0.001069 seconds
+[GPU double] kernel time     : 0.440185 seconds
+[GPU double] memcpy time     : 0.346931 seconds
+[GPU double] total cuda time : 0.788185 seconds
+[CPU] Execution time: 26.343049 seconds
+[GPU] Execution time: 0.975710 seconds
+[Speedup] CPU / GPU total = 27.00x
+[Summary] Float mismatches : 0
+[Summary] Double mismatches: 0
+
+
+==== Matrix size: n=20000, m=20000 ====
+--- Testing blockSize=64 ---
+[GPU float] malloc time     : 0.000152 seconds
+[GPU float] kernel time     : 0.019213 seconds
+[GPU float] memcpy time     : 0.260652 seconds
+[GPU float] total cuda time : 0.280017 seconds
+[GPU double] malloc time     : 0.001111 seconds
+[GPU double] kernel time     : 0.617513 seconds
+[GPU double] memcpy time     : 0.517091 seconds
+[GPU double] total cuda time : 1.135715 seconds
+[CPU] Execution time: 38.138014 seconds
+[GPU] Execution time: 1.415732 seconds
+[Speedup] CPU / GPU total = 26.94x
+[Summary] Float mismatches : 0
+[Summary] Double mismatches: 0
+
+--- Testing blockSize=128 ---
+[GPU float] malloc time     : 0.000158 seconds
+[GPU float] kernel time     : 0.019079 seconds
+[GPU float] memcpy time     : 0.256758 seconds
+[GPU float] total cuda time : 0.275995 seconds
+[GPU double] malloc time     : 0.001106 seconds
+[GPU double] kernel time     : 0.617355 seconds
+[GPU double] memcpy time     : 0.512850 seconds
+[GPU double] total cuda time : 1.131311 seconds
+[CPU] Execution time: 38.249268 seconds
+[GPU] Execution time: 1.407306 seconds
+[Speedup] CPU / GPU total = 27.18x
+[Summary] Float mismatches : 0
+[Summary] Double mismatches: 0
+
+--- Testing blockSize=256 ---
+[GPU float] malloc time     : 0.000155 seconds
+[GPU float] kernel time     : 0.018976 seconds
+[GPU float] memcpy time     : 0.261081 seconds
+[GPU float] total cuda time : 0.280212 seconds
+[GPU double] malloc time     : 0.001115 seconds
+[GPU double] kernel time     : 0.617632 seconds
+[GPU double] memcpy time     : 0.521227 seconds
+[GPU double] total cuda time : 1.139975 seconds
+[CPU] Execution time: 38.139398 seconds
+[GPU] Execution time: 1.420187 seconds
+[Speedup] CPU / GPU total = 26.86x
+[Summary] Float mismatches : 0
+[Summary] Double mismatches: 0
+
+--- Testing blockSize=512 ---
+[GPU float] malloc time     : 0.000159 seconds
+[GPU float] kernel time     : 0.019879 seconds
+[GPU float] memcpy time     : 0.257868 seconds
+[GPU float] total cuda time : 0.277906 seconds
+[GPU double] malloc time     : 0.001107 seconds
+[GPU double] kernel time     : 0.617300 seconds
+[GPU double] memcpy time     : 0.514762 seconds
+[GPU double] total cuda time : 1.133169 seconds
+[CPU] Execution time: 38.268465 seconds
+[GPU] Execution time: 1.411075 seconds
+[Speedup] CPU / GPU total = 27.12x
+[Summary] Float mismatches : 0
+[Summary] Double mismatches: 0
+
+
+==== Matrix size: n=8192, m=20000 ====
+--- Testing blockSize=64 ---
+[GPU float] malloc time     : 0.000132 seconds
+[GPU float] kernel time     : 0.008429 seconds
+[GPU float] memcpy time     : 0.105522 seconds
+[GPU float] total cuda time : 0.114083 seconds
+[GPU double] malloc time     : 0.001073 seconds
+[GPU double] kernel time     : 0.289592 seconds
+[GPU double] memcpy time     : 0.210269 seconds
+[GPU double] total cuda time : 0.500934 seconds
+[CPU] Execution time: 16.965474 seconds
+[GPU] Execution time: 0.615016 seconds
+[Speedup] CPU / GPU total = 27.59x
+[Summary] Float mismatches : 0
+[Summary] Double mismatches: 0
+
+--- Testing blockSize=128 ---
+[GPU float] malloc time     : 0.000127 seconds
+[GPU float] kernel time     : 0.008385 seconds
+[GPU float] memcpy time     : 0.105943 seconds
+[GPU float] total cuda time : 0.114455 seconds
+[GPU double] malloc time     : 0.001073 seconds
+[GPU double] kernel time     : 0.284370 seconds
+[GPU double] memcpy time     : 0.211626 seconds
+[GPU double] total cuda time : 0.497069 seconds
+[CPU] Execution time: 16.986019 seconds
+[GPU] Execution time: 0.611524 seconds
+[Speedup] CPU / GPU total = 27.78x
+[Summary] Float mismatches : 0
+[Summary] Double mismatches: 0
+
+--- Testing blockSize=256 ---
+[GPU float] malloc time     : 0.000131 seconds
+[GPU float] kernel time     : 0.008369 seconds
+[GPU float] memcpy time     : 0.106191 seconds
+[GPU float] total cuda time : 0.114691 seconds
+[GPU double] malloc time     : 0.001066 seconds
+[GPU double] kernel time     : 0.282878 seconds
+[GPU double] memcpy time     : 0.212935 seconds
+[GPU double] total cuda time : 0.496879 seconds
+[CPU] Execution time: 16.965505 seconds
+[GPU] Execution time: 0.611570 seconds
+[Speedup] CPU / GPU total = 27.74x
+[Summary] Float mismatches : 0
+[Summary] Double mismatches: 0
+
+--- Testing blockSize=512 ---
+[GPU float] malloc time     : 0.000135 seconds
+[GPU float] kernel time     : 0.008776 seconds
+[GPU float] memcpy time     : 0.107090 seconds
+[GPU float] total cuda time : 0.116000 seconds
+[GPU double] malloc time     : 0.001066 seconds
+[GPU double] kernel time     : 0.295860 seconds
+[GPU double] memcpy time     : 0.215780 seconds
+[GPU double] total cuda time : 0.512706 seconds
+[CPU] Execution time: 17.083393 seconds
+[GPU] Execution time: 0.628707 seconds
+[Speedup] CPU / GPU total = 27.17x
+[Summary] Float mismatches : 0
+[Summary] Double mismatches: 0
+
+
+==== Matrix size: n=16384, m=8192 ====
+--- Testing blockSize=64 ---
+[GPU float] malloc time     : 0.000117 seconds
+[GPU float] kernel time     : 0.006795 seconds
+[GPU float] memcpy time     : 0.086876 seconds
+[GPU float] total cuda time : 0.093789 seconds
+[GPU double] malloc time     : 0.001054 seconds
+[GPU double] kernel time     : 0.225304 seconds
+[GPU double] memcpy time     : 0.173430 seconds
+[GPU double] total cuda time : 0.399788 seconds
+[CPU] Execution time: 13.266245 seconds
+[GPU] Execution time: 0.493576 seconds
+[Speedup] CPU / GPU total = 26.88x
+[Summary] Float mismatches : 0
+[Summary] Double mismatches: 0
+
+--- Testing blockSize=128 ---
+[GPU float] malloc time     : 0.000114 seconds
+[GPU float] kernel time     : 0.006777 seconds
+[GPU float] memcpy time     : 0.086442 seconds
+[GPU float] total cuda time : 0.093333 seconds
+[GPU double] malloc time     : 0.001051 seconds
+[GPU double] kernel time     : 0.240081 seconds
+[GPU double] memcpy time     : 0.173080 seconds
+[GPU double] total cuda time : 0.414211 seconds
+[CPU] Execution time: 13.186370 seconds
+[GPU] Execution time: 0.507545 seconds
+[Speedup] CPU / GPU total = 25.98x
+[Summary] Float mismatches : 0
+[Summary] Double mismatches: 0
+
+--- Testing blockSize=256 ---
+[GPU float] malloc time     : 0.000127 seconds
+[GPU float] kernel time     : 0.006826 seconds
+[GPU float] memcpy time     : 0.086704 seconds
+[GPU float] total cuda time : 0.093656 seconds
+[GPU double] malloc time     : 0.001046 seconds
+[GPU double] kernel time     : 0.215836 seconds
+[GPU double] memcpy time     : 0.172755 seconds
+[GPU double] total cuda time : 0.389638 seconds
+[CPU] Execution time: 13.191251 seconds
+[GPU] Execution time: 0.483294 seconds
+[Speedup] CPU / GPU total = 27.29x
+[Summary] Float mismatches : 0
+[Summary] Double mismatches: 0
+
+--- Testing blockSize=512 ---
+[GPU float] malloc time     : 0.000117 seconds
+[GPU float] kernel time     : 0.007146 seconds
+[GPU float] memcpy time     : 0.087230 seconds
+[GPU float] total cuda time : 0.094493 seconds
+[GPU double] malloc time     : 0.001060 seconds
+[GPU double] kernel time     : 0.236361 seconds
+[GPU double] memcpy time     : 0.173655 seconds
+[GPU double] total cuda time : 0.411076 seconds
+[CPU] Execution time: 13.189766 seconds
+[GPU] Execution time: 0.505569 seconds
+[Speedup] CPU / GPU total = 26.09x
+[Summary] Float mismatches : 0
+[Summary] Double mismatches: 0
+
+

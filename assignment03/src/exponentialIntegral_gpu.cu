@@ -121,7 +121,7 @@ __global__ void doubleKernel(int n, int m, double a, double b, double* result) {
     }
 }
 
-void exponentialIntegralFloatGPUWrapper(int n, int m, float a, float b, float* result, float* totalTimeSecOut) {
+void exponentialIntegralFloatGPUWrapper(int n, int m, float a, float b, float* result, float* totalTimeSecOut, int blockSize) {
     int total = n * m;
     float* d_result;
 
@@ -141,13 +141,15 @@ void exponentialIntegralFloatGPUWrapper(int n, int m, float a, float b, float* r
     // Copy maxIterations to constant memory
     int maxIters = 1000;
     cudaMemcpyToSymbol(d_maxIterations, &maxIters, sizeof(int));
+    cudaDeviceSynchronize();
 
     // kernel
-    int blockSize = 256;
+    
     int gridSize = (total + blockSize - 1) / blockSize;
     cudaEventRecord(kernel_start);
     floatKernel<<<gridSize, blockSize>>>(n, m, a, b, d_result);
     cudaEventRecord(kernel_end);
+    cudaEventSynchronize(kernel_end);
 
     // memcpy
     cudaEventRecord(memcpy_start);
@@ -175,7 +177,7 @@ void exponentialIntegralFloatGPUWrapper(int n, int m, float a, float b, float* r
     cudaEventDestroy(memcpy_start); cudaEventDestroy(memcpy_end);
 }
 
-void exponentialIntegralDoubleGPUWrapper(int n, int m, double a, double b, double* result, float* totalTimeSecOut) {
+void exponentialIntegralDoubleGPUWrapper(int n, int m, double a, double b, double* result, float* totalTimeSecOut, int blockSize) {
     int total = n * m;
     double* d_result;
 
@@ -195,13 +197,15 @@ void exponentialIntegralDoubleGPUWrapper(int n, int m, double a, double b, doubl
     // Copy maxIterations to constant memory
     int maxIters = 1000;
     cudaMemcpyToSymbol(d_maxIterations, &maxIters, sizeof(int));
+    cudaDeviceSynchronize();
 
     // kernel
-    int blockSize = 256;
+
     int gridSize = (total + blockSize - 1) / blockSize;
     cudaEventRecord(kernel_start);
     doubleKernel<<<gridSize, blockSize>>>(n, m, a, b, d_result);
     cudaEventRecord(kernel_end);
+    cudaEventSynchronize(kernel_end);
 
     // memcpy
     cudaEventRecord(memcpy_start);
@@ -230,7 +234,7 @@ void exponentialIntegralDoubleGPUWrapper(int n, int m, double a, double b, doubl
 }
 
 // Stream version for float
-void exponentialIntegralFloatGPUStreamWrapper(int n, int m, float a, float b, float* result, float* totalTimeSecOut) {
+void exponentialIntegralFloatGPUStreamWrapper(int n, int m, float a, float b, float* result, float* totalTimeSecOut, int blockSize) {
     int total = n * m;
     float* d_result;
 
@@ -247,7 +251,7 @@ void exponentialIntegralFloatGPUStreamWrapper(int n, int m, float a, float b, fl
     cudaMemcpyToSymbolAsync(d_maxIterations, &maxIters, sizeof(int), 0, cudaMemcpyHostToDevice, stream);
     cudaMallocAsync(&d_result, total * sizeof(float), stream);
 
-    int blockSize = 256;
+    
     int gridSize = (total + blockSize - 1) / blockSize;
     floatKernel<<<gridSize, blockSize, 0, stream>>>(n, m, a, b, d_result);
 
@@ -278,7 +282,7 @@ void exponentialIntegralFloatGPUStreamWrapper(int n, int m, float a, float b, fl
 }
 
 // Stream version for double
-void exponentialIntegralDoubleGPUStreamWrapper(int n, int m, double a, double b, double* result, float* totalTimeSecOut) {
+void exponentialIntegralDoubleGPUStreamWrapper(int n, int m, double a, double b, double* result, float* totalTimeSecOut, int blockSize) {
     int total = n * m;
     double* d_result;
 
@@ -295,7 +299,7 @@ void exponentialIntegralDoubleGPUStreamWrapper(int n, int m, double a, double b,
     cudaMemcpyToSymbolAsync(d_maxIterations, &maxIters, sizeof(int), 0, cudaMemcpyHostToDevice, stream);
     cudaMallocAsync(&d_result, total * sizeof(double), stream);
 
-    int blockSize = 256;
+    
     int gridSize = (total + blockSize - 1) / blockSize;
     doubleKernel<<<gridSize, blockSize, 0, stream>>>(n, m, a, b, d_result);
 

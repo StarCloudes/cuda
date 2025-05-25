@@ -29,6 +29,7 @@ bool verbose,timing,cpu;
 int maxIterations;
 unsigned int n,numberOfSamples;
 double a,b;	// The interval that we are going to use
+int blockSize = 256;
 
 int main(int argc, char *argv[]) {
 	unsigned int ui,uj;
@@ -119,12 +120,12 @@ int main(int argc, char *argv[]) {
 		float gpuTimeDouble = 0.0f;
 
 		// Call both float and double precision GPU wrappers
-		exponentialIntegralFloatGPUWrapper(n, numberOfSamples, (float)a, (float)b, flatResultFloat, &gpuTimeFloat);
-		exponentialIntegralDoubleGPUWrapper(n, numberOfSamples, a, b, flatResultDouble, &gpuTimeDouble);
+		exponentialIntegralFloatGPUWrapper(n, numberOfSamples, (float)a, (float)b, flatResultFloat, &gpuTimeFloat, blockSize);
+		exponentialIntegralDoubleGPUWrapper(n, numberOfSamples, a, b, flatResultDouble, &gpuTimeDouble, blockSize);
 
 		// Call both float and double precision GPU wrappers (stream-based versions)
-		//exponentialIntegralFloatGPUStreamWrapper(n, numberOfSamples, (float)a, (float)b, flatResultFloat, &gpuTimeFloat);
-		//exponentialIntegralDoubleGPUStreamWrapper(n, numberOfSamples, a, b, flatResultDouble, &gpuTimeDouble);
+		//exponentialIntegralFloatGPUStreamWrapper(n, numberOfSamples, (float)a, (float)b, flatResultFloat, &gpuTimeFloat, blockSize);
+		//exponentialIntegralDoubleGPUStreamWrapper(n, numberOfSamples, a, b, flatResultDouble, &gpuTimeDouble, blockSize);
 		timeTotalGpu = gpuTimeFloat + gpuTimeDouble;
 	}
 
@@ -325,7 +326,7 @@ float exponentialIntegralFloat (const int n,const float x) {
 int parseArguments (int argc, char *argv[]) {
 	int c;
 
-	while ((c = getopt (argc, argv, "cghn:m:a:b:tv")) != -1) {
+	while ((c = getopt (argc, argv, "cghn:m:s:a:b:tv")) != -1) {
 		switch(c) {
 			case 'g':
 				cpu = true; break;   // enable CPU test only if -g is given
@@ -347,6 +348,8 @@ int parseArguments (int argc, char *argv[]) {
 				timing = true; break;
 			case 'v':
 				verbose = true; break;
+			case 's':
+				blockSize = atoi(optarg); break;
 			default:
 				fprintf(stderr, "Invalid option given\n");
 				printUsage();
